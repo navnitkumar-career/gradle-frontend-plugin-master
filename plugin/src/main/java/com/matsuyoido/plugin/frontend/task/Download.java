@@ -1,5 +1,7 @@
 package com.matsuyoido.plugin.frontend.task;
 
+import io.github.pixee.security.HostValidator;
+import io.github.pixee.security.Urls;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,7 +31,7 @@ public class Download {
         HttpURLConnection http = (HttpURLConnection) url.openConnection();
         Map<String, List<String>> header = http.getHeaderFields();
         while (isRedirected(header)) {
-            URL redirectUrl = new URL(header.get("Location").get(0));
+            URL redirectUrl = Urls.create(header.get("Location").get(0), Urls.HTTP_PROTOCOLS, HostValidator.DENY_COMMON_INFRASTRUCTURE_TARGETS);
             http = (HttpURLConnection) redirectUrl.openConnection();
             header = http.getHeaderFields();
         }
