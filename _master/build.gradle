@@ -1,0 +1,161 @@
+buildscript {
+    ext {
+        pluginVersion = '2.0.2'
+        jarName = 'matsuyoido-frontend-gradle-plugin'
+        gradleVersion = '5.5.1'
+        jdkVersion = JavaVersion.VERSION_1_8
+        // jdkVersion = JavaVersion.VERSION_11
+        assertJVersion = '3.11.1'
+        defaultEncoding = 'UTF-8'
+    }
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.gradle.publish:plugin-publish-plugin:0.11.0"
+        classpath "com.matsuyoido:frontend-plugin:2.0.2"
+    }
+}
+
+wrapper {
+    gradleVersion = "${gradleVersion}"
+}
+
+
+project(':plugin') {
+    apply {
+        plugin 'java'
+        plugin 'java-library'
+        plugin 'eclipse'
+    }
+
+    [compileJava, compileTestJava]*.options*.encoding = "${defaultEncoding}"
+    sourceCompatibility = "${jdkVersion}"
+    targetCompatibility = "${jdkVersion}"
+    sourceSets {
+        main {
+            java {
+                srcDirs = ['src/main/java']
+            }
+            resources {
+                srcDirs = ['src/main/resources']
+            }
+        }
+        test.compileClasspath += configurations.compileOnly
+        test.runtimeClasspath += configurations.compileOnly
+    }
+    javadoc {
+        options.charSet = "${defaultEncoding}"
+        options.encoding = "${defaultEncoding}"
+        failOnError = false // javadoc create error, but publish not require. Because, failed ignore.
+    }
+
+    task initSrcDirs {
+        doLast {
+            sourceSets.all {
+                java.srcDirs*.mkdirs()
+            }
+        }
+    }
+    tasks.eclipse.dependsOn(initSrcDirs)
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation gradleApi()
+        testImplementation  'junit:junit:4.+'
+        testImplementation "org.assertj:assertj-core:${assertJVersion}"
+
+        implementation 'io.bit3:jsass:5.9.2'
+        implementation 'com.yahoo.platform.yui:yuicompressor:2.4.8'
+        implementation 'com.google.javascript:closure-compiler-unshaded:v20191027'
+        // https://github.com/google/auto/blob/master/value/userguide/index.md
+        implementation 'com.google.auto.value:auto-value-annotations:1.7'
+        annotationProcessor 'com.google.auto.value:auto-value:1.7'
+        // closure-compiler is required above...
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9.3'
+
+        implementation 'com.helger:ph-css:6.2.0'
+        implementation 'org.webjars.npm:caniuse-db:1.0.30000748'
+    }
+
+    version = "$pluginVersion"
+    group = 'com.matsuyoido'
+    jar.baseName = "$jarName"
+
+    apply plugin: 'java-gradle-plugin'
+    gradlePlugin {
+        plugins {
+            frontEndPlugin {
+                id = 'com.matsuyoido.frontend'
+                implementationClass = 'com.matsuyoido.plugin.frontend.MainPlugin'
+            }
+        }
+    }
+
+    apply plugin: 'com.gradle.plugin-publish'
+    pluginBundle {
+        website = 'https://github.com/matsuyoido/gradle-frontend-plugin' // temporary url
+        plugins {
+            frontEndPlugin {
+                displayName = 'This plugin support preparation of deliverables.'
+                description = 'scss -> css | css -> min.css | js -> min.js'
+                vcsUrl = 'https://github.com/matsuyoido/gradle-frontend-plugin'
+                tags = ['preprocessor', 'scss', 'minify']
+                version = "$pluginVersion"
+            }
+        }
+        mavenCoordinates {
+            groupId = "com.matsuyoido"
+            artifactId = "frontend-plugin"
+        }
+    }
+}
+
+
+project(':example') {
+    apply plugin: "com.matsuyoido.frontend"
+
+    frontend {
+    setting {
+        lineEnding = 'linux'
+        prefixer {
+        ie = "11"
+        edge = "44"
+        chrome = "76"
+        firefox = "70"
+        safari = "all"
+        ios = "all"
+        android = "all"
+        }
+    }
+    style {
+        scss {
+            inDir = file("$projectDir/src/main/sass")
+            outDir = file("$projectDir/temp/css")
+        }
+        scss {
+            inDir = file("$projectDir/src/main/sass")
+            outDir = file("$projectDir/src/main/resources/static/css")
+        }
+        css {
+            inDir = file("$projectDir/temp/css")
+            outDir = file("$projectDir/src/main/resources/static/css")
+            addPrefixer = true
+        }
+    }
+    script {
+        js {
+            inDir = file("$projectDir/src/main/resources/static/js")
+            outDir = file("$projectDir/src/main/resources/static/js")
+            type = 'yahoo'
+        }
+    }
+    }
+}
+

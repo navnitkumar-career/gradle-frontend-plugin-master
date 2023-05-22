@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "command": "cd _master; ./gradlew.bat",
+    "tasks": [
+        {
+            "label": "refresh classpath",
+            "type": "shell",
+            "command": "cd _master; ./gradlew.bat cleanEclipse eclipse pluginUnderTestMetadata --refresh-dependencies"
+        },
+        {
+            "label": "plugin publish",
+            "type": "shell",
+            "command": "cd _master; ./gradlew.bat clean :plugin:publishPlugins --stacktrace"
+        },
+        {
+            "label": "check dependencies",
+            "type": "shell",
+            "command": "cd _master; ./gradlew.bat :plugin:dependencies"
+        },
+        {
+            "label": "delete local branch not exist.",
+            "type": "shell",
+            "command": "git fetch --prune"
+        }
+    ]
+}
