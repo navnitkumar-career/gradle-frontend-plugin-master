@@ -1,5 +1,7 @@
 package com.matsuyoido.plugin.frontend.task;
 
+import io.github.pixee.security.HostValidator;
+import io.github.pixee.security.Urls;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +48,7 @@ public class PrefixerCanIUse extends CanIUse {
 
     private File downloadDataJson(File jsonFile) throws IOException {
         String repoUrl = "https://github.com/Fyrd/caniuse/blob/master/data.json";
-        URL url = new URL(repoUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob", ""));
+        URL url = Urls.create(repoUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob", ""), Urls.HTTP_PROTOCOLS, HostValidator.DENY_COMMON_INFRASTRUCTURE_TARGETS);
         
         return new Download().execute(url, jsonFile);
     }
